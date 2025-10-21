@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acenda uma Vela Virtual</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f4f0;
+            color: #333;
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 12px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0d6cc;
+        }
+
+        h1 {
+            color: #663F18;
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            color: #C86514;
+            font-size: 0.95rem;
+            font-weight: normal;
+        }
+
+        section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 18px;
+            flex-grow: 1;
+        }
+
+        h2 {
+            color: #663F18;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        p {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #663F18;
+            font-size: 0.9rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px; /* Previne zoom no iOS */
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #C86514;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .error {
+            color: #d9534f;
+            font-size: 0.8rem;
+            margin-top: 3px;
+        }
+
+        button {
+            background-color: #C86514;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 20px auto;
+            width: 100%;
+            font-weight: 600;
+            touch-action: manipulation;
+        }
+
+        button:hover {
+            background-color: #663F18;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .candle-container {
+            text-align: center;
+            padding: 25px 0;
+        }
+
+        /* VELA OTIMIZADA PARA MOBILE */
+        .candle {
+            position: relative;
+            width: 50px;
+            height: 100px;
+            margin: 0 auto 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .candle-flame {
+            width: 14px;
+            height: 35px;
+            background: radial-gradient(ellipse at center, #fffde7 0%, #ffeb3b 40%, #ff9800 80%, transparent 100%);
+            border-radius: 50% 50% 50% 50%;
+            position: relative;
+            z-index: 10;
+            margin-bottom: -5px;
+            animation: flameFlicker 2s ease-in-out infinite;
+            box-shadow: 
+                0 0 10px #ffeb3b,
+                0 0 20px #ff9800,
+                0 0 30px rgba(244, 180, 0, 0.6);
+            transform-origin: center bottom;
+        }
+
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+            50% { transform: scale(1.1) translateY(-2px); opacity: 0.9; }
+        }
+
+        .candle-wax {
+            width: 45px;
+            height: 85px;
+            background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 40%, #e0e0e0 100%);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 
+                inset 2px 0 4px rgba(255, 255, 255, 0.8),
+                inset -2px 0 4px rgba(0, 0, 0, 0.1),
+                0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 5;
+        }
+
+        .candle-wax::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 10px;
+            background: #3e2723;
+            border-radius: 1px;
+            z-index: 11;
+        }
+
+        .candle-base {
+            width: 50px;
+            height: 12px;
+            background: linear-gradient(to bottom, #9e9e9e, #757575);
+            border-radius: 6px;
+            position: relative;
+            margin-top: 5px;
+            box-shadow: 
+                0 3px 8px rgba(0,0,0,0.4),
+                inset 0 1px 3px rgba(255,255,255,0.3);
+        }
+
+        .candle-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f4f0;
+            border-radius: 6px;
+        }
+
+        .candle-info h3 {
+            color: #663F18;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .candle-info p {
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .days-counter {
+            font-size: 0.8rem;
+            color: #C86514;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px 0;
+            color: #663F18;
+            font-size: 0.75rem;
+            border-top: 1px solid #e0d6cc;
+            margin-top: 25px;
+        }
+
+        /* ESTILOS DO QUIZ OTIMIZADOS PARA MOBILE */
+        .question-container {
+            margin-bottom: 18px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #663F18;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            background: #f8f4f0;
+            border: 2px solid #e0d6cc;
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #663F18;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            touch-action: manipulation;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .option:hover {
+            background: #f0e6dc;
+            border-color: #C86514;
+            transform: translateY(-1px);
+        }
+
+        .option.selected {
+            background: #f0e6dc;
+            border-color: #C86514;
+            box-shadow: 0 2px 8px rgba(200, 101, 20, 0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 5px;
+            background: #e0d6cc;
+            border-radius: 6px;
+            margin: 18px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #C86514, #663F18);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .pix-container {
+            text-align: center;
+            padding: 18px;
+            background: #f8f4f0;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #e0d6cc;
+        }
+
+        .pix-code {
+            background: white;
+            padding: 14px;
+            border-radius: 6px;
+            margin: 14px 0;
+            border: 2px dashed #C86514;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #663F18;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+
+        .pix-code:hover {
+            background: #f0e6dc;
+            transform: scale(1.01);
+        }
+
+        .pix-instructions {
+            color: #663F18;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            line-height: 1.3;
+        }
+
+        .final-button {
+            background: linear-gradient(135deg, #C86514, #663F18);
+            font-size: 1.05rem;
+            padding: 16px 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* POPUPS OTIMIZADOS PARA MOBILE */
+        .confirmation-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 63, 24, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 12px;
+        }
+
+        .confirmation-popup-content {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 2px solid #C86514;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .confirmation-popup h3 {
+            color: #663F18;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            line-height: 1.3;
+        }
+
+        .confirmation-popup p {
+            color: #666;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .confirmation-popup-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .confirmation-popup-buttons button {
+            margin: 0;
+            font-size: 0.95rem;
+            padding: 14px 18px;
+        }
+
+        .confirm-button {
+            background: linear-gradient(135deg, #C86514, #663F18);
+        }
+
+        .cancel-button {
+            background: #666;
+        }
+
+        .exit-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 12px;
+        }
+
+        .exit-popup-content {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 2px solid #ff6b6b;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .exit-popup h3 {
+            color: #663F18;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+
+        .exit-popup p {
+            color: #666;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .exit-popup-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .exit-popup-buttons button {
+            margin: 0;
+            font-size: 0.95rem;
+            padding: 14px 18px;
+        }
+
+        .stay-button {
+            background: linear-gradient(135deg, #C86514, #663F18);
+        }
+
+        .leave-button {
+            background: #666;
+        }
+
+        /* MELHORIAS ESPECÍFICAS PARA TELAS MUITO PEQUENAS */
+        @media (max-width: 360px) {
+            .container {
+                padding: 8px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            section {
+                padding: 14px;
+            }
+            
+            .option {
+                padding: 12px;
+                font-size: 0.85rem;
+                min-height: 55px;
+            }
+
+            button {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+            }
+
+            .question-text {
+                font-size: 1rem;
+            }
+        }
+
+        /* AJUSTES PARA TELAS MAIORES */
+        @media (min-width: 768px) {
+            .container {
+                padding: 20px;
+                max-width: 800px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            section {
+                padding: 30px;
+            }
+
+            .confirmation-popup-buttons,
+            .exit-popup-buttons {
+                flex-direction: row;
+            }
+
+            button {
+                max-width: 300px;
+            }
+        }
+
+        /* PREVENIR COMPORTAMENTOS INDESEJADOS NO MOBILE */
+        .option {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [currentPage, setCurrentPage] = useState('quiz');
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [answers, setAnswers] = useState([]);
+            const [formData, setFormData] = useState({
+                name: '',
+                city: '',
+                state: '',
+                reason: '',
+                days: '7'
+            });
+            const [errors, setErrors] = useState({});
+            const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+            const [showExitPopup, setShowExitPopup] = useState(false);
+            const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
+
+            // POPUP quando tentar sair do site
+            useEffect(() => {
+                const handleBeforeUnload = (e) => {
+                    if (currentPage !== 'candle') {
+                        e.preventDefault();
+                        e.returnValue = '';
+                        setShowExitPopup(true);
+                        return '';
+                    }
+                };
+
+                const handleMouseLeave = (e) => {
+                    if (e.clientY < 0 && currentPage !== 'candle') {
+                        setShowExitPopup(true);
+                    }
+                };
+
+                window.addEventListener('beforeunload', handleBeforeUnload);
+                document.addEventListener('mouseleave', handleMouseLeave);
+
+                return () => {
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                    document.removeEventListener('mouseleave', handleMouseLeave);
+                };
+            }, [currentPage]);
+
+            const questions = [
+                {
+                    question: "Você sente que essa alma ainda precisa de luz para encontrar paz?",
+                    options: [
+                        "Sim, sinto uma energia pesada ao lembrar",
+                        "Às vezes sinto que algo está incompleto", 
+                        "Tenho sonhos perturbadores com essa pessoa",
+                        "Sinto que preciso fazer algo para ajudar seu caminho",
+                        "Não tenho certeza, mas gostaria de garantir sua paz"
+                    ]
+                },
+                {
+                    question: "Quantas vezes você pensou em fazer algo especial por essa alma, mas não soube como?",
+                    options: [
+                        "Muitas vezes, mas nunca encontrei a maneira certa",
+                        "Todo dia, carrego esse peso comigo",
+                        "Recentemente, os sinais têm sido mais fortes", 
+                        "Sempre, mas nada parece ser suficiente",
+                        "Agora percebo que é a hora certa"
+                    ]
+                },
+                {
+                    question: "Você acredita que um gesto de luz pode guiar essa alma para o descanso eterno?",
+                    options: [
+                        "Sim, e estou buscando a maneira perfeita",
+                        "Acredito que toda alma merece uma luz guia",
+                        "Preciso fazer isso para minha própria paz",
+                        "Sinto que é minha missão ajudar",
+                        "Todas as religiões falam sobre a importância da luz"
+                    ]
+                },
+                {
+                    question: "Você já recebeu sinais de que essa alma precisa de ajuda para seguir em paz?",
+                    options: [
+                        "Sim, em sonhos ou pressentimentos fortes",
+                        "Sinto uma energia pesada quando penso nela",
+                        "Coisas estranhas acontecem sem explicação",
+                        "Tenho a sensação constante de que algo está incompleto",
+                        "Acho que toda alma merece uma despedida digna"
+                    ]
+                },
+                {
+                    question: "Quanto tempo você está carregando o peso de não ter feito um gesto final por essa alma?",
+                    options: [
+                        "Dias que parecem anos de angústia",
+                        "Semanas de noites mal dormidas",
+                        "Meses de pensamentos incessantes",
+                        "Anos de culpa silenciosa", 
+                        "Sinto que é agora ou nunca"
+                    ]
+                },
+                {
+                    question: "O que impede você de oferecer a luz que essa alma tanto precisa?",
+                    options: [
+                        "Não sabia como fazer de forma significativa",
+                        "Não encontrava o momento ou lugar certo",
+                        "Tinha medo de não ser suficiente",
+                        "A vida quotidiana sempre atrapalhou",
+                        "Estava esperando um sinal claro"
+                    ]
+                },
+                {
+                    question: "Você acredita que algumas almas ficam presas esperando um gesto de amor para seguir em frente?",
+                    options: [
+                        "Sim, e não quero que isso aconteça",
+                        "Acredito que o amor é a ponte para a paz eterna",
+                        "Sinto que essa é exatamente nossa situação",
+                        "Todas as tradições espirituais confirmam isso",
+                        "Prefiro garantir do que me arrepender"
+                    ]
+                },
+                {
+                    question: "Quantas vezes você prometeu a si mesmo que faria algo por essa alma, mas acabou adiando?",
+                    options: [
+                        "Incontáveis vezes - a culpa consome",
+                        "Várias vezes, sempre achando que não era o momento",
+                        "Recentemente, os sinais ficaram mais fortes",
+                        "Sempre, mas agora percebo a urgência",
+                        "Esta é minha última chance de fazer certo"
+                    ]
+                },
+                {
+                    question: "Você sabia que existem velas especiais consagradas que podem servir como ponte espiritual?",
+                    options: [
+                        "Não, mas faz todo sentido agora",
+                        "Já ouvi falar, mas nunca encontrei uma verdadeira",
+                        "Sempre busquei, mas nada parecia autêntico",
+                        "Acredito que este seja o sinal que esperava",
+                        "Preciso dessa conexão mais do que nunca"
+                    ]
+                },
+                {
+                    question: "O que você acha que aconteceria se essa alma finalmente recebesse a luz que tanto precisa?",
+                    options: [
+                        "Encontraria paz eterna de uma vez por todas",
+                        "Nossa conexão se transformaria em algo puro",
+                        "Eu finalmente me libertaria desta culpa",
+                        "Ambos encontraríamos o descanso merecido",
+                        "Um ciclo de sofrimento se romperia para sempre"
+                    ]
+                },
+                {
+                    question: "Se existisse uma vela com energia especialmente preparada para casos como o seu, você usaria?",
+                    options: [
+                        "Sim, é a resposta que tanto procuro",
+                        "Imediatamente, não posso mais adiar",
+                        "Finalmente uma solução real e significativa", 
+                        "Já deveria ter feito isso há muito tempo",
+                        "Esta oportunidade não pode ser desperdiçada"
+                    ]
+                },
+                {
+                    question: "Quantas almas você acha que já encontraram paz através de gestos de luz como este?",
+                    options: [
+                        "Milhares - a tradição não existe à toa",
+                        "Incontáveis - é um conhecimento ancestral",
+                        "Muitas - eu poderia ser o próximo",
+                        "Todas que realmente mereciam descanso",
+                        "Esta pode ser a mais importante de todas"
+                    ]
+                },
+                {
+                    question: "Você está preparado para ser a pessoa que finalmente fará a diferença para essa alma?",
+                    options: [
+                        "Sim, chega de adiamentos e desculpas",
+                        "Estou mais pronto do que nunca",
+                        "Esta é minha missão espiritual",
+                        "Não posso carregar essa culpa por mais tempo", 
+                        "O momento é agora - não há volta"
+                    ]
+                },
+                {
+                    question: "O que seria pior: tentar e falhar, ou nunca ter tentado oferecer a luz?",
+                    options: [
+                        "Nunca tentar - o arrependimento é eterno",
+                        "Saber que poderia ter feito algo e não fez",
+                        "Continuar com este peso na consciência",
+                        "Deixar uma alma sem a paz merecida",
+                        "Todas as alternativas acima"
+                    ]
+                },
+                {
+                    question: "Está pronto para acender a chama que pode transformar o destino espiritual dessa alma?",
+                    options: [
+                        "SIM! Não posso mais esperar",
+                        "Finalmente encontrei o caminho certo",
+                        "Esta vela é a resposta que tanto busquei",
+                        "Chegou a hora de fazer a diferença",
+                        "Estou comprometido com esta missão sagrada"
+                    ]
+                },
+                {
+                    question: "Se não for você, quem? Se não for agora, quando? Esta pode ser sua última chance de fazer a diferença para essa alma que tanto precisa de você.",
+                    options: [
+                        "EU SOU A PESSOA CERTA - AGORA É O MOMENTO! - Sim, entendi que esta vela consagrada é a única maneira de oferecer a luz que essa alma tanto precisa. Não posso mais adiar minha missão espiritual.",
+                        "VOU DEIXAR ESSA ALMA NO ESCURO MAIS UMA VEZ - Prefiro conviver com a culpa de saber que abandonei quem mais precisava de mim, e que essa alma pode nunca encontrar a paz eterna por minha negligência."
+                    ]
+                }
+            ];
+
+            const handleAnswer = (answerIndex) => {
+                const newAnswers = [...answers];
+                newAnswers[currentQuestion] = answerIndex;
+                setAnswers(newAnswers);
+
+                if (currentQuestion < questions.length - 1) {
+                    setTimeout(() => {
+                        setCurrentQuestion(currentQuestion + 1);
+                    }, 400);
+                } else {
+                    setTimeout(() => {
+                        setCurrentPage('form');
+                        setShowExitPopup(false);
+                    }, 800);
+                }
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData({
+                    ...formData,
+                    [name]: value
+                });
+                
+                if (errors[name]) {
+                    setErrors({
+                        ...errors,
+                        [name]: ''
+                    });
+                }
+            };
+
+            const validateForm = () => {
+                const newErrors = {};
+                
+                if (!formData.name.trim()) {
+                    newErrors.name = 'Nome é obrigatório';
+                }
+                
+                if (!formData.city.trim()) {
+                    newErrors.city = 'Cidade é obrigatória';
+                }
+                
+                if (!formData.state.trim()) {
+                    newErrors.state = 'Estado é obrigatório';
+                }
+                
+                if (!formData.reason.trim()) {
+                    newErrors.reason = 'Motivo é obrigatório';
+                }
+                
+                setErrors(newErrors);
+                return Object.keys(newErrors).length === 0;
+            };
+
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                if (validateForm()) {
+                    setShowConfirmationPopup(true);
+                }
+            };
+
+            const handleConfirm = () => {
+                setShowConfirmationPopup(false);
+                setCurrentPage('payment');
+            };
+
+            const handleCancel = () => {
+                setShowConfirmationPopup(false);
+            };
+
+            const copyPixCode = () => {
+                const pixCode = "00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-1234-5678901234560215Vela Espiritual52040000530398654046.995802BR5913SEU NOME AQU6008Sao Paulo62070503***6304A1B2";
+                navigator.clipboard.writeText(pixCode).then(() => {
+                    alert('Código PIX copiado! Cole no seu app bancário.');
+                });
+            };
+
+            const handlePaymentConfirm = () => {
+                setPaymentConfirmed(true);
+            };
+
+            const handleLightCandle = () => {
+                setCurrentPage('candle');
+                setShowExitPopup(false);
+            };
+
+            const handleStay = () => {
+                setShowExitPopup(false);
+            };
+
+            const handleLeave = () => {
+                setShowExitPopup(false);
+                window.close();
+            };
+
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+            return (
+                <div className="container">
+                    <header>
+                        <h1>Acenda uma Vela Virtual</h1>
+                        <p className="subtitle">Um gesto simbólico de luz, esperança e lembrança</p>
+                    </header>
+
+                    {currentPage === 'quiz' && (
+                        <section>
+                            <div className="progress-bar">
+                                <div className="progress" style={{width: `${progress}%`}}></div>
+                            </div>
+
+                            <div className="question-container">
+                                <h2 className="question-text">
+                                    {questions[currentQuestion].question}
+                                </h2>
+                                
+                                <div className="options-container">
+                                    {questions[currentQuestion].options.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`option ${answers[currentQuestion] === index ? 'selected' : ''}`}
+                                            onClick={() => handleAnswer(index)}
+                                        >
+                                            {option}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {currentPage === 'form' && (
+                        <section>
+                            <h2>Complete sua Jornada</h2>
+                            <p>Preencha os dados para personalizar sua vela:</p>
+                            
+                            <form onSubmit={handleFormSubmit}>
+                                <div className="form-group">
+                                    <label htmlFor="name">Nome para quem deseja acender a vela *</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Digite o nome"
+                                    />
+                                    {errors.name && <div className="error">{errors.name}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="city">Cidade *</label>
+                                    <input
+                                        type="text"
+                                        id="city"
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        placeholder="Digite a cidade"
+                                    />
+                                    {errors.city && <div className="error">{errors.city}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="state">Estado *</label>
+                                    <input
+                                        type="text"
+                                        id="state"
+                                        name="state"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        placeholder="Digite o estado"
+                                    />
+                                    {errors.state && <div className="error">{errors.state}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="reason">Motivo da vela *</label>
+                                    <textarea
+                                        id="reason"
+                                        name="reason"
+                                        value={formData.reason}
+                                        onChange={handleChange}
+                                        placeholder="Descreva o motivo pelo qual está acendendo esta vela"
+                                    />
+                                    {errors.reason && <div className="error">{errors.reason}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="days">Por quanto tempo a vela ficará acesa?</label>
+                                    <select
+                                        id="days"
+                                        name="days"
+                                        value={formData.days}
+                                        onChange={handleChange}
+                                    >
+                                        <option value="1">1 dia (Ritual Básico)</option>
+                                        <option value="7">7 dias (Ritual Completo)</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit">Acender Vela</button>
+                            </form>
+                        </section>
+                    )}
+
+                    {currentPage === 'payment' && (
+                        <section>
+                            <h2>Último Passo: Realize o Pagamento</h2>
+                            
+                            <div className="pix-container">
+                                <p className="pix-instructions">
+                                    <strong>Valor: R$ 6,99</strong><br/>
+                                    Faça o PIX abaixo para ativar sua vela:
+                                </p>
+                                
+                                <div className="pix-code" onClick={copyPixCode}>
+                                    00020126580014br.gov.bcb.pix0136a1b2c3d4...<br/>
+                                    <small>(Clique para copiar o código PIX)</small>
+                                </div>
+                                
+                                <p className="pix-instructions">
+                                    📱 Abra seu app bancário → PIX Copia e Cola<br/>
+                                    💫 Cole o código → Confirme o pagamento
+                                </p>
+                                
+                                {!paymentConfirmed ? (
+                                    <button onClick={handlePaymentConfirm}>
+                                        ✅ Já efetuei o PIX
+                                    </button>
+                                ) : (
+                                    <button className="final-button" onClick={handleLightCandle}>
+                                        🕯️ ACENDA SUA VELA
+                                    </button>
+                                )}
+                            </div>
+                        </section>
+                    )}
+
+                    {currentPage === 'candle' && (
+                        <section>
+                            <div className="candle-container">
+                                <h2>Sua Vela Está Acesa</h2>
+                                
+                                <div className="candle">
+                                    <div className="candle-flame"></div>
+                                    <div className="candle-wax"></div>
+                                    <div className="candle-base"></div>
+                                </div>
+                                
+                                <div className="candle-info">
+                                    <h3>Esta vela foi acesa para:</h3>
+                                    <p><strong>Nome:</strong> {formData.name}</p>
+                                    <p><strong>Cidade:</strong> {formData.city}</p>
+                                    <p><strong>Estado:</strong> {formData.state}</p>
+                                    <p><strong>Motivo:</strong> {formData.reason}</p>
+                                    <p className="days-counter">
+                                        {formData.days === '1' 
+                                            ? '✨ Esta vela brilhará por 1 dia completo' 
+                                            : '🌟 Esta vela brilhará por 7 dias completos'}
+                                    </p>
+                                </div>
+                                
+                                <button onClick={() => setCurrentPage('quiz')}>Acender Outra Vela</button>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* POPUPS */}
+                    {showConfirmationPopup && (
+                        <div className="confirmation-popup">
+                            <div className="confirmation-popup-content">
+                                <h3>✨ Momento de Transformação Espiritual ✨</h3>
+                                <p>
+                                    <strong>Você está prestes a acender uma chama sagrada!</strong><br/><br/>
+                                    Esta vela consagrada será o elo espiritual entre você e {formData.name}, 
+                                    oferecendo a luz que esta alma tanto precisa para encontrar paz eterna.
+                                    <br/><br/>
+                                    <strong>Esta é sua missão espiritual.</strong>
+                                </p>
+                                <div className="confirmation-popup-buttons">
+                                    <button className="confirm-button" onClick={handleConfirm}>
+                                        🙏 SIM, Quero Ajudar Esta Alma
+                                    </button>
+                                    <button className="cancel-button" onClick={handleCancel}>
+                                        😔 Não Estou Pronto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showExitPopup && (
+                        <div className="exit-popup">
+                            <div className="exit-popup-content">
+                                <h3>🕯️ Espere! Não Desista Desta Alma</h3>
+                                <p>
+                                    <strong>Esta alma ainda precisa de você!</strong><br/><br/>
+                                    Você está tão perto de fazer a diferença eterna. 
+                                    Se você sair agora, esta alma pode nunca receber a luz que tanto precisa para encontrar paz.
+                                    <br/><br/>
+                                    <strong>Volte e complete sua missão espiritual.</strong>
+                                </p>
+                                <div className="exit-popup-buttons">
+                                    <button className="stay-button" onClick={handleStay}>
+                                        🙏 Voltar e Ajudar
+                                    </button>
+                                    <button className="leave-button" onClick={handleLeave}>
+                                        😔 Abandonar Esta Alma
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <footer>
+                        <p>© 2023 Acenda uma Vela Virtual - Um espaço para reflexão e homenagem</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
