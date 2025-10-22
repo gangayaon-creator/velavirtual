@@ -7,6 +7,8 @@
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Biblioteca para gerar QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f8f4f0; color: #333; line-height: 1.5; min-height: 100vh; }
@@ -20,6 +22,7 @@
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
         .error { color: #d9534f; font-size: 0.8rem; margin-top: 3px; }
         button { background-color: #C86514; color: white; border: none; padding: 16px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; display: block; margin: 20px auto; width: 100%; font-weight: 600; }
+        .whatsapp-button { background: #25D366; color: white; border: none; padding: 16px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; display: block; margin: 20px auto; width: 100%; font-weight: 600; text-decoration: none; text-align: center; }
         .candle-container { text-align: center; padding: 25px 0; }
         .candle { position: relative; width: 50px; height: 100px; margin: 0 auto 20px; display: flex; flex-direction: column; align-items: center; }
         .candle-flame { width: 14px; height: 35px; background: radial-gradient(ellipse at center, #fffde7 0%, #ffeb3b 40%, #ff9800 80%, transparent 100%); border-radius: 50%; animation: flameFlicker 2s ease-in-out infinite; }
@@ -33,13 +36,18 @@
         .progress-bar { width: 100%; height: 5px; background: #e0d6cc; border-radius: 6px; margin: 18px 0; overflow: hidden; }
         .progress { height: 100%; background: linear-gradient(90deg, #C86514, #663F18); border-radius: 6px; transition: width 0.5s ease; }
         .pix-container { text-align: center; padding: 18px; background: #f8f4f0; border-radius: 8px; margin: 15px 0; border: 2px solid #e0d6cc; }
-        .payment-link { background: white; padding: 18px; border-radius: 8px; margin: 14px 0; border: 2px solid #C86514; color: #663F18; text-decoration: none; display: block; font-weight: 600; transition: all 0.3s; }
+        .pix-code { background: white; padding: 14px; border-radius: 6px; margin: 14px 0; border: 2px dashed #C86514; font-family: monospace; font-size: 0.85rem; color: #663F18; cursor: pointer; word-break: break-all; }
+        .payment-link { background: white; padding: 18px; border-radius: 8px; margin: 14px 0; border: 2px solid #C86514; color: #663F18; text-decoration: none; display: block; font-weight: 600; transition: all 0.3s; text-align: center; }
         .payment-link:hover { background: #f0e6dc; transform: translateY(-2px); }
+        .qrcode-container { margin: 20px 0; text-align: center; }
+        .qrcode-image { border: 2px solid #C86514; border-radius: 8px; padding: 10px; background: white; display: inline-block; }
         .confirmation-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(102, 63, 24, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 12px; }
         .confirmation-popup-content { background: white; padding: 22px; border-radius: 12px; text-align: center; width: 100%; max-width: 380px; }
         .confirmation-popup-buttons { display: flex; flex-direction: column; gap: 8px; }
         .payment-status { text-align: center; padding: 10px; margin: 10px 0; border-radius: 6px; }
         .payment-approved { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .payment-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .whatsapp-info { background: #dcf8c6; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #25D366; }
     </style>
 </head>
 <body>
@@ -48,7 +56,13 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // SEU LINK DE PAGAMENTO PROFISSIONAL
+        // SUA CHAVE PIX REAL
+        const PIX_KEY = "00020126620014br.gov.bcb.pix0114+55839938106050222acenda sua vela agora 52040000530398654046.995802BR5924Camila Mariana Dos Santo6009Sao Paulo610901227-20062240520daqr26244699744428776304BA3B";
+
+        // SEU NÚMERO DO WHATSAPP (sem +55)
+        const WHATSAPP_NUMBER = "5583993810605";
+
+        // LINK DE PAGAMENTO MERCADO PAGO
         const PAYMENT_LINK = "https://mpago.la/1dNPEPY";
 
         function App() {
@@ -57,65 +71,330 @@
             const [answers, setAnswers] = useState([]);
             const [formData, setFormData] = useState({ name: '', city: '', state: '', reason: '', days: '7' });
             const [errors, setErrors] = useState({});
-            const [paymentConfirmed, setPaymentConfirmed] = useState(false);
             const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
+            const [qrCodeGenerated, setQrCodeGenerated] = useState(false);
+            const [orderId, setOrderId] = useState('');
+            const [showWhatsAppButton, setShowWhatsAppButton] = useState(false);
+            const [visitedPaymentPage, setVisitedPaymentPage] = useState(false);
 
-            // PERGUNTAS COMPLETAS
+            // PERGUNTAS COMPLETAS - 16 PERGUNTAS ORIGINAIS
             const questions = [
-                { question: "Você sente que essa alma ainda precisa de luz para encontrar paz?", options: ["Sim, sinto uma energia pesada", "Às vezes sinto incompleto", "Tenho sonhos perturbadores", "Sinto que preciso ajudar", "Não tenho certeza"] },
-                { question: "Quantas vezes pensou em fazer algo especial?", options: ["Muitas vezes", "Todo dia", "Recentemente", "Sempre", "Agora é a hora"] },
-                { question: "Acredita que um gesto de luz pode guiar essa alma?", options: ["Sim, busco a maneira", "Toda alma merece luz", "Para minha paz", "Minha missão", "Todas as religiões falam"] },
-                { question: "Já recebeu sinais?", options: ["Sim, em sonhos", "Sinto energia pesada", "Coisas estranhas", "Sensação incompleta", "Toda alma merece"] },
-                { question: "Quanto tempo carrega esse peso?", options: ["Dias de angústia", "Semanas sem dormir", "Meses de pensamentos", "Anos de culpa", "Agora ou nunca"] },
-                { question: "O que impede você?", options: ["Não sabia como", "Não encontrava momento", "Medo de não ser suficiente", "Vida atrapalha", "Esperando sinal"] },
-                { question: "Acredita que almas ficam presas?", options: ["Sim, não quero isso", "Amor é a ponte", "Nossa situação", "Tradições confirmam", "Prefiro garantir"] },
-                { question: "Quantas vezes adiou?", options: ["Incontáveis vezes", "Várias vezes", "Sinais fortes", "Sempre adiei", "Última chance"] },
-                { question: "Sabia sobre velas consagradas?", options: ["Não, faz sentido", "Já ouvi falar", "Sempre busquei", "Sinal esperado", "Preciso conexão"] },
-                { question: "O que acontecería?", options: ["Paz eterna", "Conexão pura", "Me libertaria", "Descanso merecido", "Ciclo rompido"] },
-                { question: "Usaria uma vela especial?", options: ["Sim, é a resposta", "Imediatamente", "Solução real", "Já devia ter feito", "Oportunidade única"] },
-                { question: "Quantas almas já encontraram paz?", options: ["Milhares", "Incontáveis", "Muitas", "Todas merecedoras", "Mais importante"] },
-                { question: "Está preparado?", options: ["Chega de adiar", "Mais pronto que nunca", "Missão espiritual", "Não posso mais", "Momento é agora"] },
-                { question: "O que seria pior?", options: ["Nunca tentar", "Saber que poderia", "Peso na consciência", "Deixar alma sem paz", "Todas alternativas"] },
-                { question: "Está pronto para acender?", options: ["SIM!", "Caminho certo", "Resposta que busco", "Hora da diferença", "Missão sagrada"] },
-                { question: "Se não for você, quem? Se não for agora, quando?", options: [
-                    "EU SOU A PESSOA CERTA - AGORA É O MOMENTO!",
-                    "VOU DEIXAR ESSA ALMA NO ESCURO MAIS UMA VEZ"
-                ]}
+                {
+                    question: "Você sente que essa alma ainda precisa de luz para encontrar paz?",
+                    options: [
+                        "Sim, sinto uma energia pesada ao lembrar",
+                        "Às vezes sinto que algo está incompleto", 
+                        "Tenho sonhos perturbadores com essa pessoa",
+                        "Sinto que preciso fazer algo para ajudar seu caminho",
+                        "Não tenho certeza, mas gostaria de garantir sua paz"
+                    ]
+                },
+                {
+                    question: "Quantas vezes você pensou em fazer algo especial por essa alma, mas não soube como?",
+                    options: [
+                        "Muitas vezes, mas nunca encontrei a maneira certa",
+                        "Todo dia, carrego esse peso comigo",
+                        "Recentemente, os sinais têm sido mais fortes", 
+                        "Sempre, mas nada parece ser suficiente",
+                        "Agora percebo que é a hora certa"
+                    ]
+                },
+                {
+                    question: "Você acredita que um gesto de luz pode guiar essa alma para o descanso eterno?",
+                    options: [
+                        "Sim, e estou buscando a maneira perfeita",
+                        "Acredito que toda alma merece uma luz guia",
+                        "Preciso fazer isso para minha própria paz",
+                        "Sinto que é minha missão ajudar",
+                        "Todas as religiões falam sobre a importância da luz"
+                    ]
+                },
+                {
+                    question: "Você já recebeu sinais de que essa alma precisa de ajuda para seguir em paz?",
+                    options: [
+                        "Sim, em sonhos ou pressentimentos fortes",
+                        "Sinto uma energia pesada quando penso nela",
+                        "Coisas estranhas acontecem sem explicação",
+                        "Tenho a sensação constante de que algo está incompleto",
+                        "Acho que toda alma merece uma despedida digna"
+                    ]
+                },
+                {
+                    question: "Quanto tempo você está carregando o peso de não ter feito um gesto final por essa alma?",
+                    options: [
+                        "Dias que parecem anos de angústia",
+                        "Semanas de noites mal dormidas",
+                        "Meses de pensamentos incessantes",
+                        "Anos de culpa silenciosa", 
+                        "Sinto que é agora ou nunca"
+                    ]
+                },
+                {
+                    question: "O que impede você de oferecer a luz que essa alma tanto precisa?",
+                    options: [
+                        "Não sabia como fazer de forma significativa",
+                        "Não encontrava o momento ou lugar certo",
+                        "Tinha medo de não ser suficiente",
+                        "A vida quotidiana sempre atrapalhou",
+                        "Estava esperando um sinal claro"
+                    ]
+                },
+                {
+                    question: "Você acredita que algumas almas ficam presas esperando um gesto de amor para seguir em frente?",
+                    options: [
+                        "Sim, e não quero que isso aconteça",
+                        "Acredito que o amor é a ponte para a paz eterna",
+                        "Sinto que essa é exatamente nossa situação",
+                        "Todas as tradições espirituais confirmam isso",
+                        "Prefiro garantir do que me arrepender"
+                    ]
+                },
+                {
+                    question: "Quantas vezes você prometeu a si mesmo que faria algo por essa alma, mas acabou adiando?",
+                    options: [
+                        "Incontáveis vezes - a culpa consome",
+                        "Várias vezes, sempre achando que não era o momento",
+                        "Recentemente, os sinais ficaram mais fortes",
+                        "Sempre, mas agora percebo a urgência",
+                        "Esta é minha última chance de fazer certo"
+                    ]
+                },
+                {
+                    question: "Você sabia que existem velas especiais consagradas que podem servir como ponte espiritual?",
+                    options: [
+                        "Não, mas faz todo sentido agora",
+                        "Já ouvi falar, mas nunca encontrei uma verdadeira",
+                        "Sempre busquei, mas nada parecia autêntico",
+                        "Acredito que este seja o sinal que esperava",
+                        "Preciso dessa conexão mais do que nunca"
+                    ]
+                },
+                {
+                    question: "O que você acha que aconteceria se essa alma finalmente recebesse a luz que tanto precisa?",
+                    options: [
+                        "Encontraria paz eterna de uma vez por todas",
+                        "Nossa conexão se transformaria em algo puro",
+                        "Eu finalmente me libertaria desta culpa",
+                        "Ambos encontraríamos o descanso merecido",
+                        "Um ciclo de sofrimento se romperia para sempre"
+                    ]
+                },
+                {
+                    question: "Se existisse uma vela com energia especialmente preparada para casos como o seu, você usaria?",
+                    options: [
+                        "Sim, é a resposta que tanto procuro",
+                        "Imediatamente, não posso mais adiar",
+                        "Finalmente uma solução real e significativa", 
+                        "Já deveria ter feito isso há muito tempo",
+                        "Esta oportunidade não pode ser desperdiçada"
+                    ]
+                },
+                {
+                    question: "Quantas almas você acha que já encontraram paz através de gestos de luz como este?",
+                    options: [
+                        "Milhares - a tradição não existe à toa",
+                        "Incontáveis - é um conhecimento ancestral",
+                        "Muitas - eu poderia ser o próximo",
+                        "Todas que realmente mereciam descanso",
+                        "Esta pode ser a mais importante de todas"
+                    ]
+                },
+                {
+                    question: "Você está preparado para ser a pessoa que finalmente fará a diferença para essa alma?",
+                    options: [
+                        "Sim, chega de adiamentos e desculpas",
+                        "Estou mais pronto do que nunca",
+                        "Esta é minha missão espiritual",
+                        "Não posso carregar essa culpa por mais tempo", 
+                        "O momento é agora - não há volta"
+                    ]
+                },
+                {
+                    question: "O que seria pior: tentar e falhar, ou nunca ter tentado oferecer a luz?",
+                    options: [
+                        "Nunca tentar - o arrependimento é eterno",
+                        "Saber que poderia ter feito algo e não fez",
+                        "Continuar com este peso na consciência",
+                        "Deixar uma alma sem a paz merecida",
+                        "Todas as alternativas acima"
+                    ]
+                },
+                {
+                    question: "Está pronto para acender a chama que pode transformar o destino espiritual dessa alma?",
+                    options: [
+                        "SIM! Não posso mais esperar",
+                        "Finalmente encontrei o caminho certo",
+                        "Esta vela é a resposta que tanto busquei",
+                        "Chegou a hora de fazer a diferença",
+                        "Estou comprometido com esta missão sagrada"
+                    ]
+                },
+                {
+                    question: "Se não for você, quem? Se não for agora, quando? Esta pode ser sua última chance de fazer a diferença para essa alma que tanto precisa de você.",
+                    options: [
+                        "EU SOU A PESSOA CERTA - AGORA É O MOMENTO! - Sim, entendi que esta vela consagrada é a única maneira de oferecer a luz que essa alma tanto precisa. Não posso mais adiar minha missão espiritual.",
+                        "VOU DEIXAR ESSA ALMA NO ESCURO MAIS UMA VEZ - Prefiro conviver com a culpa de saber que abandonei quem mais precisava de mim, e que essa alma pode nunca encontrar a paz eterna por minha negligência."
+                    ]
+                }
             ];
+
+            // Gerar QR Code da chave PIX
+            const generateQRCode = () => {
+                if (qrCodeGenerated) return;
+                
+                const qr = qrcode(0, 'M');
+                qr.addData(PIX_KEY);
+                qr.make();
+                
+                const qrCodeElement = document.getElementById('qrcode');
+                if (qrCodeElement) {
+                    qrCodeElement.innerHTML = qr.createImgTag(4);
+                    setQrCodeGenerated(true);
+                }
+            };
+
+            // Criar novo pedido
+            const createOrder = () => {
+                const newOrderId = 'VELA_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                setOrderId(newOrderId);
+                
+                // Salvar no localStorage para controle
+                const orderData = {
+                    id: newOrderId,
+                    name: formData.name,
+                    city: formData.city,
+                    reason: formData.reason,
+                    days: formData.days,
+                    timestamp: new Date().toLocaleString('pt-BR')
+                };
+                
+                localStorage.setItem('currentOrder', JSON.stringify(orderData));
+            };
+
+            // FUNÇÃO CORRIGIDA - COPIAR PIX
+            const copyPixCode = () => {
+                navigator.clipboard.writeText(PIX_KEY).then(() => {
+                    alert('✅ Código PIX copiado! Cole no seu app bancário.');
+                }).catch(() => {
+                    // Fallback para dispositivos mais antigos
+                    const textArea = document.createElement('textarea');
+                    textArea.value = PIX_KEY;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('✅ Código PIX copiado! Cole no seu app bancário.');
+                });
+            };
+
+            // FUNÇÃO CORRIGIDA - WHATSAPP
+            const handleWhatsAppClick = () => {
+                const message = `Olá! Acabei de pagar pela vela virtual.\n\n📋 Meus dados:\n• Nome: ${formData.name}\n• Cidade: ${formData.city}\n• Motivo: ${formData.reason}\n• Pedido: ${orderId}\n\nPor favor, confirme meu pagamento e libere o acesso à vela. 🙏`;
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank');
+            };
+
+            // Verificar se usuário voltou da página de pagamento
+            useEffect(() => {
+                // Quando usuário chega na página de pagamento, marca como "visitou"
+                if (currentPage === 'payment') {
+                    setVisitedPaymentPage(true);
+                    setTimeout(generateQRCode, 100);
+                }
+
+                // Se usuário já visitou a página de pagamento E voltou, mostra botão WhatsApp
+                if (currentPage === 'payment' && visitedPaymentPage) {
+                    setShowWhatsAppButton(true);
+                }
+            }, [currentPage, visitedPaymentPage]);
+
+            // Verificar se há pedido em andamento ao carregar a página
+            useEffect(() => {
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const order = JSON.parse(savedOrder);
+                    setOrderId(order.id);
+                    setFormData({
+                        name: order.name,
+                        city: order.city,
+                        state: order.state || '',
+                        reason: order.reason,
+                        days: order.days
+                    });
+                    setVisitedPaymentPage(true);
+                    setShowWhatsAppButton(true);
+                    setCurrentPage('payment');
+                }
+            }, []);
 
             const handleAnswer = (index) => {
                 const newAnswers = [...answers];
                 newAnswers[currentQuestion] = index;
                 setAnswers(newAnswers);
+
                 if (currentQuestion < questions.length - 1) {
-                    setTimeout(() => setCurrentQuestion(currentQuestion + 1), 400);
+                    setTimeout(() => {
+                        setCurrentQuestion(currentQuestion + 1);
+                    }, 400);
                 } else {
-                    setTimeout(() => setCurrentPage('form'), 800);
+                    setTimeout(() => {
+                        setCurrentPage('form');
+                    setVisitedPaymentPage(false);
+                        setShowWhatsAppButton(false);
+                    }, 800);
                 }
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData({
+                    ...formData,
+                    [name]: value
+                });
+                
+                if (errors[name]) {
+                    setErrors({
+                        ...errors,
+                        [name]: ''
+                    });
+                }
+            };
+
+            const validateForm = () => {
+                const newErrors = {};
+                
+                if (!formData.name.trim()) {
+                    newErrors.name = 'Nome é obrigatório';
+                }
+                
+                if (!formData.city.trim()) {
+                    newErrors.city = 'Cidade é obrigatória';
+                }
+                
+                if (!formData.state.trim()) {
+                    newErrors.state = 'Estado é obrigatório';
+                }
+                
+                if (!formData.reason.trim()) {
+                    newErrors.reason = 'Motivo é obrigatório';
+                }
+                
+                setErrors(newErrors);
+                return Object.keys(newErrors).length === 0;
             };
 
             const handleFormSubmit = (e) => {
                 e.preventDefault();
-                const newErrors = {};
-                if (!formData.name.trim()) newErrors.name = 'Nome obrigatório';
-                if (!formData.city.trim()) newErrors.city = 'Cidade obrigatória';
-                if (!formData.state.trim()) newErrors.state = 'Estado obrigatório';
-                if (!formData.reason.trim()) newErrors.reason = 'Motivo obrigatório';
-                setErrors(newErrors);
-                if (Object.keys(newErrors).length === 0) setShowConfirmationPopup(true);
+                if (validateForm()) {
+                    setShowConfirmationPopup(true);
+                }
             };
 
             const handleConfirmPayment = () => {
+                createOrder();
                 setShowConfirmationPopup(false);
                 setCurrentPage('payment');
-            };
-
-            const handlePaymentConfirm = () => {
-                setPaymentConfirmed(true);
-            };
-
-            const handleLightCandle = () => {
-                setCurrentPage('candle');
+                setVisitedPaymentPage(true);
             };
 
             const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -129,12 +408,22 @@
 
                     {currentPage === 'quiz' && (
                         <section>
-                            <div className="progress-bar"><div className="progress" style={{width: `${progress}%`}}></div></div>
+                            <div className="progress-bar">
+                                <div className="progress" style={{width: `${progress}%`}}></div>
+                            </div>
+
                             <div className="question-container">
-                                <h2 className="question-text">{questions[currentQuestion].question}</h2>
+                                <h2 className="question-text">
+                                    {questions[currentQuestion].question}
+                                </h2>
+                                
                                 <div className="options-container">
                                     {questions[currentQuestion].options.map((option, index) => (
-                                        <div key={index} className={`option ${answers[currentQuestion] === index ? 'selected' : ''}`} onClick={() => handleAnswer(index)}>
+                                        <div
+                                            key={index}
+                                            className={`option ${answers[currentQuestion] === index ? 'selected' : ''}`}
+                                            onClick={() => handleAnswer(index)}
+                                        >
                                             {option}
                                         </div>
                                     ))}
@@ -146,12 +435,73 @@
                     {currentPage === 'form' && (
                         <section>
                             <h2>Complete sua Jornada</h2>
+                            <p>Preencha os dados para personalizar sua vela:</p>
+                            
                             <form onSubmit={handleFormSubmit}>
-                                <div className="form-group"><label>Nome *</label><input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Digite o nome" />{errors.name && <div className="error">{errors.name}</div>}</div>
-                                <div className="form-group"><label>Cidade *</label><input type="text" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} placeholder="Digite a cidade" />{errors.city && <div className="error">{errors.city}</div>}</div>
-                                <div className="form-group"><label>Estado *</label><input type="text" value={formData.state} onChange={(e) => setFormData({...formData, state: e.target.value})} placeholder="Digite o estado" />{errors.state && <div className="error">{errors.state}</div>}</div>
-                                <div className="form-group"><label>Motivo *</label><textarea value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} placeholder="Descreva o motivo" />{errors.reason && <div className="error">{errors.reason}</div>}</div>
-                                <div className="form-group"><label>Duração</label><select value={formData.days} onChange={(e) => setFormData({...formData, days: e.target.value})}><option value="1">1 dia</option><option value="7">7 dias</option></select></div>
+                                <div className="form-group">
+                                    <label htmlFor="name">Nome para quem deseja acender a vela *</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Digite o nome"
+                                    />
+                                    {errors.name && <div className="error">{errors.name}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="city">Cidade *</label>
+                                    <input
+                                        type="text"
+                                        id="city"
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        placeholder="Digite a cidade"
+                                    />
+                                    {errors.city && <div className="error">{errors.city}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="state">Estado *</label>
+                                    <input
+                                        type="text"
+                                        id="state"
+                                        name="state"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        placeholder="Digite o estado"
+                                    />
+                                    {errors.state && <div className="error">{errors.state}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="reason">Motivo da vela *</label>
+                                    <textarea
+                                        id="reason"
+                                        name="reason"
+                                        value={formData.reason}
+                                        onChange={handleChange}
+                                        placeholder="Descreva o motivo pelo qual está acendendo esta vela"
+                                    />
+                                    {errors.reason && <div className="error">{errors.reason}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="days">Por quanto tempo a vela ficará acesa?</label>
+                                    <select
+                                        id="days"
+                                        name="days"
+                                        value={formData.days}
+                                        onChange={handleChange}
+                                    >
+                                        <option value="1">1 dia (Ritual Básico)</option>
+                                        <option value="7">7 dias (Ritual Completo)</option>
+                                    </select>
+                                </div>
+                                
                                 <button type="submit">Acender Vela</button>
                             </form>
                         </section>
@@ -159,52 +509,60 @@
 
                     {currentPage === 'payment' && (
                         <section>
-                            <h2>Pagamento Rápido e Seguro</h2>
+                            <h2>Último Passo: Realize o Pagamento</h2>
                             <div className="pix-container">
                                 <p><strong>Valor: R$ 6,99</strong></p>
+                                {orderId && <p><strong>Seu pedido: {orderId}</strong></p>}
                                 
+                                {/* OPÇÃO 1: LINK MERCADO PAGO */}
                                 <a href={PAYMENT_LINK} target="_blank" rel="noopener noreferrer" className="payment-link">
-                                    🔗 CLIQUE AQUI PARA PAGAR COM PIX/CARTÃO
+                                    💳 PAGAR COM CARTÃO/PIX (Mercado Pago)
                                 </a>
-                                
-                                <p>✅ Pagamento 100% seguro via Mercado Pago<br/>
-                                   💫 Processo rápido e automático<br/>
-                                   🔒 Dados protegidos</p>
-                                
-                                {!paymentConfirmed ? (
-                                    <button onClick={handlePaymentConfirm}>
-                                        ✅ Já efetuei o pagamento
-                                    </button>
-                                ) : (
-                                    <button onClick={handleLightCandle}>
-                                        🕯️ ACENDER MINHA VELA
-                                    </button>
-                                )}
-                            </div>
-                        </section>
-                    )}
 
-                    {currentPage === 'candle' && (
-                        <section>
-                            <div className="candle-container">
-                                <h2>Sua Vela Está Acesa! 🙏</h2>
-                                <div className="candle">
-                                    <div className="candle-flame"></div>
-                                    <div className="candle-wax"></div>
+                                {/* OPÇÃO 2: PIX DIRETO */}
+                                <div style={{textAlign: 'center', margin: '20px 0'}}>
+                                    <p><strong>--- OU ---</strong></p>
+                                    <p>Pague via PIX direto:</p>
                                 </div>
-                                <div className="candle-info">
-                                    <h3>Vela acesa para: {formData.name}</h3>
-                                    <p><strong>Cidade:</strong> {formData.city}</p>
-                                    <p><strong>Estado:</strong> {formData.state}</p>
-                                    <p><strong>Motivo:</strong> {formData.reason}</p>
-                                    <p><strong>Duração:</strong> {formData.days} {formData.days === '1' ? 'dia' : 'dias'}</p>
+
+                                <div className="qrcode-container">
+                                    <div className="qrcode-image">
+                                        <div id="qrcode"></div>
+                                    </div>
+                                    <p style={{marginTop: '10px', fontSize: '0.9rem'}}>📱 Escaneie o QR Code acima</p>
                                 </div>
-                                <button onClick={() => {
-                                    setCurrentPage('quiz');
-                                    setCurrentQuestion(0);
-                                    setAnswers([]);
-                                    setPaymentConfirmed(false);
-                                }}>Acender Outra Vela</button>
+                                
+                                <div className="pix-code" onClick={copyPixCode}>
+                                    {PIX_KEY}<br/>
+                                    <small>(Clique para copiar o código PIX)</small>
+                                </div>
+
+                                {/* BOTÃO WHATSAPP - SÓ APARECE DEPOIS DE VISITAR PAGAMENTO */}
+                                {showWhatsAppButton && (
+                                    <div className="whatsapp-info">
+                                        <p><strong>✅ Pagamento realizado?</strong></p>
+                                        <p>Clique abaixo para falar comigo no WhatsApp e receber acesso à sua vela:</p>
+                                        <button 
+                                            onClick={handleWhatsAppClick}
+                                            className="whatsapp-button"
+                                        >
+                                            💬 FALAR NO WHATSAPP E RECEBER ACESSO
+                                        </button>
+                                        <p style={{fontSize: '0.8rem', marginTop: '10px'}}>
+                                            Enviarei o link de acesso à sua vela virtual após confirmar o pagamento
+                                        </p>
+                                    </div>
+                                )}
+
+                                {!showWhatsAppButton && (
+                                    <div className="payment-status payment-pending">
+                                        💫 <strong>Como funciona:</strong><br/>
+                                        1. Clique no link acima para pagar com cartão/PIX<br/>
+                                        2. Ou use o QR Code/código PIX para pagar<br/>
+                                        3. Volte para esta página após o pagamento<br/>
+                                        4. Clique em "FALAR NO WHATSAPP" para receber acesso
+                                    </div>
+                                )}
                             </div>
                         </section>
                     )}
@@ -212,12 +570,21 @@
                     {showConfirmationPopup && (
                         <div className="confirmation-popup">
                             <div className="confirmation-popup-content">
-                                <h3>✨ Confirmar Vela ✨</h3>
-                                <p>Para: <strong>{formData.name}</strong></p>
-                                <p>Valor: <strong>R$ 6,99</strong></p>
+                                <h3>✨ Momento de Transformação Espiritual ✨</h3>
+                                <p>
+                                    <strong>Você está prestes a acender uma chama sagrada!</strong><br/><br/>
+                                    Esta vela consagrada será o elo espiritual entre você e {formData.name}, 
+                                    oferecendo a luz que esta alma tanto precisa para encontrar paz eterna.
+                                    <br/><br/>
+                                    <strong>Esta é sua missão espiritual.</strong>
+                                </p>
                                 <div className="confirmation-popup-buttons">
-                                    <button onClick={handleConfirmPayment}>✅ CONFIRMAR E PAGAR</button>
-                                    <button onClick={() => setShowConfirmationPopup(false)}>❌ CANCELAR</button>
+                                    <button onClick={handleConfirmPayment}>
+                                        🙏 SIM, Quero Ajudar Esta Alma
+                                    </button>
+                                    <button onClick={() => setShowConfirmationPopup(false)}>
+                                        😔 Não Estou Pronto
+                                    </button>
                                 </div>
                             </div>
                         </div>
