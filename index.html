@@ -33,16 +33,13 @@
         .progress-bar { width: 100%; height: 5px; background: #e0d6cc; border-radius: 6px; margin: 18px 0; overflow: hidden; }
         .progress { height: 100%; background: linear-gradient(90deg, #C86514, #663F18); border-radius: 6px; transition: width 0.5s ease; }
         .pix-container { text-align: center; padding: 18px; background: #f8f4f0; border-radius: 8px; margin: 15px 0; border: 2px solid #e0d6cc; }
-        .pix-code { background: white; padding: 14px; border-radius: 6px; margin: 14px 0; border: 2px dashed #C86514; font-family: monospace; font-size: 0.85rem; color: #663F18; cursor: pointer; word-break: break-all; }
-        .payment-processing { text-align: center; padding: 20px; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #C86514; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .payment-link { background: white; padding: 18px; border-radius: 8px; margin: 14px 0; border: 2px solid #C86514; color: #663F18; text-decoration: none; display: block; font-weight: 600; transition: all 0.3s; }
+        .payment-link:hover { background: #f0e6dc; transform: translateY(-2px); }
         .confirmation-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(102, 63, 24, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 12px; }
         .confirmation-popup-content { background: white; padding: 22px; border-radius: 12px; text-align: center; width: 100%; max-width: 380px; }
         .confirmation-popup-buttons { display: flex; flex-direction: column; gap: 8px; }
         .payment-status { text-align: center; padding: 10px; margin: 10px 0; border-radius: 6px; }
         .payment-approved { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .payment-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
     </style>
 </head>
 <body>
@@ -51,10 +48,8 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // CONFIGURAÇÕES DO BACK4APP
-        const BACK4APP_APP_ID = "yh17p501Hj4lfKuPai9BizmilyWOXS13jVx7pXut";
-        const BACK4APP_API_KEY = "todP7aQbhD8jKhMau2E71NuyQd3FVUclLbw0BKa3";
-        const BACK4APP_URL = "https://parseapi.back4app.com/functions";
+        // SEU LINK DE PAGAMENTO PROFISSIONAL
+        const PAYMENT_LINK = "https://mpago.la/1dNPEPY";
 
         function App() {
             const [currentPage, setCurrentPage] = useState('quiz');
@@ -62,13 +57,8 @@
             const [answers, setAnswers] = useState([]);
             const [formData, setFormData] = useState({ name: '', city: '', state: '', reason: '', days: '7' });
             const [errors, setErrors] = useState({});
-            const [paymentStatus, setPaymentStatus] = useState('pending');
+            const [paymentConfirmed, setPaymentConfirmed] = useState(false);
             const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
-            const [pixCode, setPixCode] = useState('');
-            const [qrCode, setQrCode] = useState('');
-            const [paymentId, setPaymentId] = useState('');
-            const [isProcessing, setIsProcessing] = useState(false);
-            const [useFallback, setUseFallback] = useState(false);
 
             // PERGUNTAS COMPLETAS
             const questions = [
@@ -93,94 +83,6 @@
                 ]}
             ];
 
-            // Chamar backend para criar pagamento COM FALLBACK
-            const createPayment = async () => {
-                setIsProcessing(true);
-                try {
-                    const response = await fetch(`${BACK4APP_URL}/createPayment`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Parse-Application-Id': BACK4APP_APP_ID,
-                            'X-Parse-REST-API-Key': BACK4APP_API_KEY,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: formData.name,
-                            amount: 6.99
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (data.result && data.result.success) {
-                        setPixCode(data.result.pixCode);
-                        setQrCode(data.result.qrCode);
-                        setPaymentId(data.result.paymentId);
-                        setPaymentStatus('pending');
-                        setUseFallback(false);
-                    } else {
-                        throw new Error('Backend não respondeu corretamente');
-                    }
-
-                } catch (error) {
-                    console.log('Usando fallback - Backend offline');
-                    // FALLBACK - PIX estático
-                    setPixCode("00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-1234-5678901234560215Vela Virtual52040000530398654046.995802BR5913VELA VIRTUAL6008Sao Paulo62070503***6304A1B2");
-                    setPaymentId("FALLBACK_" + Date.now());
-                    setPaymentStatus('pending');
-                    setUseFallback(true);
-                } finally {
-                    setIsProcessing(false);
-                }
-            };
-
-            // Verificar status do pagamento
-            const checkPaymentStatus = async () => {
-                if (!paymentId) return;
-                
-                // Se está usando fallback, simular pagamento
-                if (useFallback) {
-                    // Simular pagamento aprovado após 30 segundos
-                    setTimeout(() => {
-                        setPaymentStatus('approved');
-                        setCurrentPage('candle');
-                    }, 30000);
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`${BACK4APP_URL}/checkPayment`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Parse-Application-Id': BACK4APP_APP_ID,
-                            'X-Parse-REST-API-Key': BACK4APP_API_KEY,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            paymentId: paymentId
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (data.result && data.result.success && data.result.approved) {
-                        setPaymentStatus('approved');
-                        setCurrentPage('candle');
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar:', error);
-                }
-            };
-
-            // Verificar pagamento a cada 10 segundos
-            useEffect(() => {
-                let interval;
-                if (paymentId && paymentStatus === 'pending') {
-                    interval = setInterval(checkPaymentStatus, 10000);
-                }
-                return () => clearInterval(interval);
-            }, [paymentId, paymentStatus]);
-
             const handleAnswer = (index) => {
                 const newAnswers = [...answers];
                 newAnswers[currentQuestion] = index;
@@ -204,15 +106,16 @@
             };
 
             const handleConfirmPayment = () => {
-                createPayment();
                 setShowConfirmationPopup(false);
                 setCurrentPage('payment');
             };
 
-            const copyPixCode = () => {
-                navigator.clipboard.writeText(pixCode).then(() => {
-                    alert('Código PIX copiado!');
-                });
+            const handlePaymentConfirm = () => {
+                setPaymentConfirmed(true);
+            };
+
+            const handleLightCandle = () => {
+                setCurrentPage('candle');
             };
 
             const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -256,38 +159,52 @@
 
                     {currentPage === 'payment' && (
                         <section>
-                            <h2>Pagamento PIX</h2>
+                            <h2>Pagamento Rápido e Seguro</h2>
                             <div className="pix-container">
-                                {isProcessing ? (
-                                    <div className="payment-processing"><div className="loader"></div><p>Gerando PIX...</p></div>
+                                <p><strong>Valor: R$ 6,99</strong></p>
+                                
+                                <a href={PAYMENT_LINK} target="_blank" rel="noopener noreferrer" className="payment-link">
+                                    🔗 CLIQUE AQUI PARA PAGAR COM PIX/CARTÃO
+                                </a>
+                                
+                                <p>✅ Pagamento 100% seguro via Mercado Pago<br/>
+                                   💫 Processo rápido e automático<br/>
+                                   🔒 Dados protegidos</p>
+                                
+                                {!paymentConfirmed ? (
+                                    <button onClick={handlePaymentConfirm}>
+                                        ✅ Já efetuei o pagamento
+                                    </button>
                                 ) : (
-                                    <>
-                                        <p><strong>Valor: R$ 6,99</strong></p>
-                                        {useFallback && <div className="payment-status payment-pending">⚠️ Modo offline - Use o código PIX abaixo</div>}
-                                        {qrCode && !useFallback && <img src={`data:image/png;base64,${qrCode}`} alt="QR Code PIX" style={{maxWidth: '200px', margin: '15px auto', display: 'block', border: '2px solid #C86514', borderRadius: '8px'}} />}
-                                        {pixCode && <div className="pix-code" onClick={copyPixCode}>{pixCode}<br/><small>(Clique para copiar)</small></div>}
-                                        <p>📱 Use o código PIX acima<br/>✅ {useFallback ? 'Pagamento simulado' : 'Pagamento verificado automaticamente'}</p>
-                                        {paymentStatus === 'pending' && <div className="payment-status payment-pending">⏳ Aguardando confirmação...</div>}
-                                        {paymentStatus === 'approved' && <div className="payment-status payment-approved">✅ Pagamento confirmado!</div>}
-                                    </>
+                                    <button onClick={handleLightCandle}>
+                                        🕯️ ACENDER MINHA VELA
+                                    </button>
                                 )}
                             </div>
                         </section>
                     )}
 
-                    {currentPage === 'candle' && paymentStatus === 'approved' && (
+                    {currentPage === 'candle' && (
                         <section>
                             <div className="candle-container">
-                                <h2>Vela Acesa com Sucesso! 🙏</h2>
-                                <div className="candle"><div className="candle-flame"></div><div className="candle-wax"></div></div>
+                                <h2>Sua Vela Está Acesa! 🙏</h2>
+                                <div className="candle">
+                                    <div className="candle-flame"></div>
+                                    <div className="candle-wax"></div>
+                                </div>
                                 <div className="candle-info">
                                     <h3>Vela acesa para: {formData.name}</h3>
                                     <p><strong>Cidade:</strong> {formData.city}</p>
                                     <p><strong>Estado:</strong> {formData.state}</p>
                                     <p><strong>Motivo:</strong> {formData.reason}</p>
-                                    <p><strong>Duração:</strong> {formData.days} dias</p>
+                                    <p><strong>Duração:</strong> {formData.days} {formData.days === '1' ? 'dia' : 'dias'}</p>
                                 </div>
-                                <button onClick={() => { setCurrentPage('quiz'); setCurrentQuestion(0); setAnswers([]); setPaymentStatus('pending'); setUseFallback(false); }}>Acender Outra Vela</button>
+                                <button onClick={() => {
+                                    setCurrentPage('quiz');
+                                    setCurrentQuestion(0);
+                                    setAnswers([]);
+                                    setPaymentConfirmed(false);
+                                }}>Acender Outra Vela</button>
                             </div>
                         </section>
                     )}
