@@ -4,562 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acenda uma Vela Virtual</title>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f8f4f0;
-            color: #333;
-            line-height: 1.5;
-            min-height: 100vh;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 12px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 15px 0;
-            border-bottom: 1px solid #e0d6cc;
-        }
-
-        h1 {
-            color: #663F18;
-            font-size: 1.8rem;
-            margin-bottom: 6px;
-            line-height: 1.2;
-        }
-
-        .subtitle {
-            color: #C86514;
-            font-size: 0.95rem;
-            font-weight: normal;
-        }
-
-        section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            margin-bottom: 18px;
-            flex-grow: 1;
-        }
-
-        h2 {
-            color: #663F18;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-
-        p {
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #663F18;
-            font-size: 0.9rem;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: #C86514;
-            outline: none;
-        }
-
-        textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .error {
-            color: #d9534f;
-            font-size: 0.8rem;
-            margin-top: 3px;
-        }
-
-        button {
-            background-color: #C86514;
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: block;
-            margin: 20px auto;
-            width: 100%;
-            font-weight: 600;
-            touch-action: manipulation;
-        }
-
-        button:hover {
-            background-color: #663F18;
-        }
-
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .candle-container {
-            text-align: center;
-            padding: 25px 0;
-        }
-
-        .candle {
-            position: relative;
-            width: 50px;
-            height: 100px;
-            margin: 0 auto 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .candle-flame {
-            width: 14px;
-            height: 35px;
-            background: radial-gradient(ellipse at center, #fffde7 0%, #ffeb3b 40%, #ff9800 80%, transparent 100%);
-            border-radius: 50% 50% 50% 50%;
-            position: relative;
-            z-index: 10;
-            margin-bottom: -5px;
-            animation: flameFlicker 2s ease-in-out infinite;
-            box-shadow: 
-                0 0 10px #ffeb3b,
-                0 0 20px #ff9800,
-                0 0 30px rgba(244, 180, 0, 0.6);
-            transform-origin: center bottom;
-        }
-
-        @keyframes flameFlicker {
-            0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
-            50% { transform: scale(1.1) translateY(-2px); opacity: 0.9; }
-        }
-
-        .candle-wax {
-            width: 45px;
-            height: 85px;
-            background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 40%, #e0e0e0 100%);
-            border-radius: 10px;
-            position: relative;
-            box-shadow: 
-                inset 2px 0 4px rgba(255, 255, 255, 0.8),
-                inset -2px 0 4px rgba(0, 0, 0, 0.1),
-                0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 5;
-        }
-
-        .candle-wax::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 2px;
-            height: 10px;
-            background: #3e2723;
-            border-radius: 1px;
-            z-index: 11;
-        }
-
-        .candle-base {
-            width: 50px;
-            height: 12px;
-            background: linear-gradient(to bottom, #9e9e9e, #757575);
-            border-radius: 6px;
-            position: relative;
-            margin-top: 5px;
-            box-shadow: 
-                0 3px 8px rgba(0,0,0,0.4),
-                inset 0 1px 3px rgba(255,255,255,0.3);
-        }
-
-        .candle-info {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #f8f4f0;
-            border-radius: 6px;
-        }
-
-        .candle-info h3 {
-            color: #663F18;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-
-        .candle-info p {
-            margin-bottom: 4px;
-            font-size: 0.9rem;
-        }
-
-        .days-counter {
-            font-size: 0.8rem;
-            color: #C86514;
-            font-weight: bold;
-        }
-
-        footer {
-            text-align: center;
-            padding: 15px 0;
-            color: #663F18;
-            font-size: 0.75rem;
-            border-top: 1px solid #e0d6cc;
-            margin-top: 25px;
-        }
-
-        .question-container {
-            margin-bottom: 18px;
-        }
-
-        .question-text {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: #663F18;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .option {
-            background: #f8f4f0;
-            border: 2px solid #e0d6cc;
-            border-radius: 8px;
-            padding: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #663F18;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            touch-action: manipulation;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .option:hover {
-            background: #f0e6dc;
-            border-color: #C86514;
-            transform: translateY(-1px);
-        }
-
-        .option.selected {
-            background: #f0e6dc;
-            border-color: #C86514;
-            box-shadow: 0 2px 8px rgba(200, 101, 20, 0.2);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 5px;
-            background: #e0d6cc;
-            border-radius: 6px;
-            margin: 18px 0;
-            overflow: hidden;
-        }
-
-        .progress {
-            height: 100%;
-            background: linear-gradient(90deg, #C86514, #663F18);
-            border-radius: 6px;
-            transition: width 0.5s ease;
-        }
-
-        .pix-container {
-            text-align: center;
-            padding: 18px;
-            background: #f8f4f0;
-            border-radius: 8px;
-            margin: 15px 0;
-            border: 2px solid #e0d6cc;
-        }
-
-        .pix-code {
-            background: white;
-            padding: 14px;
-            border-radius: 6px;
-            margin: 14px 0;
-            border: 2px dashed #C86514;
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: #663F18;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            word-break: break-all;
-            line-height: 1.3;
-        }
-
-        .pix-code:hover {
-            background: #f0e6dc;
-            transform: scale(1.01);
-        }
-
-        .pix-instructions {
-            color: #663F18;
-            margin: 10px 0;
-            font-size: 0.9rem;
-            line-height: 1.3;
-        }
-
-        .final-button {
-            background: linear-gradient(135deg, #C86514, #663F18);
-            font-size: 1.05rem;
-            padding: 16px 20px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .confirmation-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(102, 63, 24, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 12px;
-        }
-
-        .confirmation-popup-content {
-            background: white;
-            padding: 22px;
-            border-radius: 12px;
-            text-align: center;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            border: 2px solid #C86514;
-            animation: popIn 0.3s ease-out;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .confirmation-popup h3 {
-            color: #663F18;
-            margin-bottom: 12px;
-            font-size: 1.2rem;
-            line-height: 1.3;
-        }
-
-        .confirmation-popup p {
-            color: #666;
-            margin-bottom: 18px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .confirmation-popup-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .confirmation-popup-buttons button {
-            margin: 0;
-            font-size: 0.95rem;
-            padding: 14px 18px;
-        }
-
-        .confirm-button {
-            background: linear-gradient(135deg, #C86514, #663F18);
-        }
-
-        .cancel-button {
-            background: #666;
-        }
-
-        .exit-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 12px;
-        }
-
-        .exit-popup-content {
-            background: white;
-            padding: 22px;
-            border-radius: 12px;
-            text-align: center;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            border: 2px solid #ff6b6b;
-            animation: popIn 0.3s ease-out;
-        }
-
-        .exit-popup h3 {
-            color: #663F18;
-            margin-bottom: 12px;
-            font-size: 1.2rem;
-        }
-
-        .exit-popup p {
-            color: #666;
-            margin-bottom: 18px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .exit-popup-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .exit-popup-buttons button {
-            margin: 0;
-            font-size: 0.95rem;
-            padding: 14px 18px;
-        }
-
-        .stay-button {
-            background: linear-gradient(135deg, #C86514, #663F18);
-        }
-
-        .leave-button {
-            background: #666;
-        }
-
-        @media (max-width: 360px) {
-            .container {
-                padding: 8px;
-            }
-            
-            h1 {
-                font-size: 1.6rem;
-            }
-            
-            section {
-                padding: 14px;
-            }
-            
-            .option {
-                padding: 12px;
-                font-size: 0.85rem;
-                min-height: 55px;
-            }
-
-            button {
-                padding: 14px 16px;
-                font-size: 0.95rem;
-            }
-
-            .question-text {
-                font-size: 1rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 20px;
-                max-width: 800px;
-            }
-            
-            h1 {
-                font-size: 2.5rem;
-            }
-            
-            section {
-                padding: 30px;
-            }
-
-            .confirmation-popup-buttons,
-            .exit-popup-buttons {
-                flex-direction: row;
-            }
-
-            button {
-                max-width: 300px;
-            }
-        }
-
-        .option {
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
-        button {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .payment-processing {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #C86514;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f4f0; color: #333; line-height: 1.5; min-height: 100vh; }
+        .container { max-width: 100%; margin: 0 auto; padding: 12px; min-height: 100vh; display: flex; flex-direction: column; }
+        header { text-align: center; margin-bottom: 25px; padding: 15px 0; border-bottom: 1px solid #e0d6cc; }
+        h1 { color: #663F18; font-size: 1.8rem; margin-bottom: 6px; }
+        section { background-color: white; border-radius: 8px; padding: 18px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); margin-bottom: 18px; flex-grow: 1; }
+        h2 { color: #663F18; margin-bottom: 15px; font-size: 1.3rem; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #663F18; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .error { color: #d9534f; font-size: 0.8rem; margin-top: 3px; }
+        button { background-color: #C86514; color: white; border: none; padding: 16px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; display: block; margin: 20px auto; width: 100%; font-weight: 600; }
+        .candle-container { text-align: center; padding: 25px 0; }
+        .candle { position: relative; width: 50px; height: 100px; margin: 0 auto 20px; display: flex; flex-direction: column; align-items: center; }
+        .candle-flame { width: 14px; height: 35px; background: radial-gradient(ellipse at center, #fffde7 0%, #ffeb3b 40%, #ff9800 80%, transparent 100%); border-radius: 50%; animation: flameFlicker 2s ease-in-out infinite; }
+        @keyframes flameFlicker { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.9; } }
+        .candle-wax { width: 45px; height: 85px; background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 40%, #e0e0e0 100%); border-radius: 10px; }
+        .question-container { margin-bottom: 18px; }
+        .question-text { font-size: 1.1rem; margin-bottom: 15px; color: #663F18; text-align: center; }
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .option { background: #f8f4f0; border: 2px solid #e0d6cc; border-radius: 8px; padding: 14px; cursor: pointer; color: #663F18; font-size: 0.9rem; min-height: 60px; display: flex; align-items: center; }
+        .option.selected { background: #f0e6dc; border-color: #C86514; }
+        .progress-bar { width: 100%; height: 5px; background: #e0d6cc; border-radius: 6px; margin: 18px 0; overflow: hidden; }
+        .progress { height: 100%; background: linear-gradient(90deg, #C86514, #663F18); border-radius: 6px; transition: width 0.5s ease; }
+        .pix-container { text-align: center; padding: 18px; background: #f8f4f0; border-radius: 8px; margin: 15px 0; border: 2px solid #e0d6cc; }
+        .pix-code { background: white; padding: 14px; border-radius: 6px; margin: 14px 0; border: 2px dashed #C86514; font-family: monospace; font-size: 0.85rem; color: #663F18; cursor: pointer; word-break: break-all; }
+        .payment-processing { text-align: center; padding: 20px; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #C86514; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .confirmation-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(102, 63, 24, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 12px; }
+        .confirmation-popup-content { background: white; padding: 22px; border-radius: 12px; text-align: center; width: 100%; max-width: 380px; }
+        .confirmation-popup-buttons { display: flex; flex-direction: column; gap: 8px; }
+        .payment-status { text-align: center; padding: 10px; margin: 10px 0; border-radius: 6px; }
+        .payment-approved { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .payment-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
     </style>
 </head>
 <body>
@@ -568,266 +51,152 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // SUAS CREDENCIAIS DO MERCADO PAGO
-        const MP_PUBLIC_KEY = "APP_USR-93b34600-0883-4afd-824c-c20a8eefdcef";
-        const MP_ACCESS_TOKEN = "APP_USR-1959914450485479-102118-1720018df4d2db05e3c3e5ea037d2a95-2624469974";
+        // CONFIGURAÇÕES DO BACK4APP
+        const BACK4APP_APP_ID = "yh17p501Hj4lfKuPai9BizmilyWOXS13jVx7pXut";
+        const BACK4APP_API_KEY = "todP7aQbhD8jKhMau2E71NuyQd3FVUclLbw0BKa3";
+        const BACK4APP_URL = "https://parseapi.back4app.com/functions";
 
         function App() {
             const [currentPage, setCurrentPage] = useState('quiz');
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [answers, setAnswers] = useState([]);
-            const [formData, setFormData] = useState({
-                name: '',
-                city: '',
-                state: '',
-                reason: '',
-                days: '7'
-            });
+            const [formData, setFormData] = useState({ name: '', city: '', state: '', reason: '', days: '7' });
             const [errors, setErrors] = useState({});
-            const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-            const [showExitPopup, setShowExitPopup] = useState(false);
+            const [paymentStatus, setPaymentStatus] = useState('pending');
             const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
             const [pixCode, setPixCode] = useState('');
             const [qrCode, setQrCode] = useState('');
             const [paymentId, setPaymentId] = useState('');
             const [isProcessing, setIsProcessing] = useState(false);
 
-            // Inicializar Mercado Pago
-            useEffect(() => {
-                const mp = new MercadoPago(MP_PUBLIC_KEY, {
-                    locale: 'pt-BR'
-                });
-                window.mp = mp;
-            }, []);
-
-            // POPUP quando tentar sair do site
-            useEffect(() => {
-                const handleBeforeUnload = (e) => {
-                    if (currentPage !== 'candle') {
-                        e.preventDefault();
-                        e.returnValue = '';
-                        setShowExitPopup(true);
-                        return '';
-                    }
-                };
-
-                const handleMouseLeave = (e) => {
-                    if (e.clientY < 0 && currentPage !== 'candle') {
-                        setShowExitPopup(true);
-                    }
-                };
-
-                window.addEventListener('beforeunload', handleBeforeUnload);
-                document.addEventListener('mouseleave', handleMouseLeave);
-
-                return () => {
-                    window.removeEventListener('beforeunload', handleBeforeUnload);
-                    document.removeEventListener('mouseleave', handleMouseLeave);
-                };
-            }, [currentPage]);
-
+            // PERGUNTAS COMPLETAS
             const questions = [
-                {
-                    question: "Você sente que essa alma ainda precisa de luz para encontrar paz?",
-                    options: [
-                        "Sim, sinto uma energia pesada ao lembrar",
-                        "Às vezes sinto que algo está incompleto", 
-                        "Tenho sonhos perturbadores com essa pessoa",
-                        "Sinto que preciso fazer algo para ajudar seu caminho",
-                        "Não tenho certeza, mas gostaria de garantir sua paz"
-                    ]
-                },
-                // ... (mantenha todas as outras questões igual)
-                {
-                    question: "Se não for você, quem? Se não for agora, quando? Esta pode ser sua última chance de fazer a diferença para essa alma que tanto precisa de você.",
-                    options: [
-                        "EU SOU A PESSOA CERTA - AGORA É O MOMENTO! - Sim, entendi que esta vela consagrada é a única maneira de oferecer a luz que essa alma tanto precisa. Não posso mais adiar minha missão espiritual.",
-                        "VOU DEIXAR ESSA ALMA NO ESCURO MAIS UMA VEZ - Prefiro conviver com a culpa de saber que abandonei quem mais precisava de mim, e que essa alma pode nunca encontrar a paz eterna por minha negligência."
-                    ]
-                }
+                { question: "Você sente que essa alma ainda precisa de luz para encontrar paz?", options: ["Sim, sinto uma energia pesada", "Às vezes sinto incompleto", "Tenho sonhos perturbadores", "Sinto que preciso ajudar", "Não tenho certeza"] },
+                { question: "Quantas vezes pensou em fazer algo especial?", options: ["Muitas vezes", "Todo dia", "Recentemente", "Sempre", "Agora é a hora"] },
+                { question: "Acredita que um gesto de luz pode guiar essa alma?", options: ["Sim, busco a maneira", "Toda alma merece luz", "Para minha paz", "Minha missão", "Todas as religiões falam"] },
+                { question: "Já recebeu sinais?", options: ["Sim, em sonhos", "Sinto energia pesada", "Coisas estranhas", "Sensação incompleta", "Toda alma merece"] },
+                { question: "Quanto tempo carrega esse peso?", options: ["Dias de angústia", "Semanas sem dormir", "Meses de pensamentos", "Anos de culpa", "Agora ou nunca"] },
+                { question: "O que impede você?", options: ["Não sabia como", "Não encontrava momento", "Medo de não ser suficiente", "Vida atrapalha", "Esperando sinal"] },
+                { question: "Acredita que almas ficam presas?", options: ["Sim, não quero isso", "Amor é a ponte", "Nossa situação", "Tradições confirmam", "Prefiro garantir"] },
+                { question: "Quantas vezes adiou?", options: ["Incontáveis vezes", "Várias vezes", "Sinais fortes", "Sempre adiei", "Última chance"] },
+                { question: "Sabia sobre velas consagradas?", options: ["Não, faz sentido", "Já ouvi falar", "Sempre busquei", "Sinal esperado", "Preciso conexão"] },
+                { question: "O que aconteceria?", options: ["Paz eterna", "Conexão pura", "Me libertaria", "Descanso merecido", "Ciclo rompido"] },
+                { question: "Usaria uma vela especial?", options: ["Sim, é a resposta", "Imediatamente", "Solução real", "Já devia ter feito", "Oportunidade única"] },
+                { question: "Quantas almas já encontraram paz?", options: ["Milhares", "Incontáveis", "Muitas", "Todas merecedoras", "Mais importante"] },
+                { question: "Está preparado?", options: ["Chega de adiar", "Mais pronto que nunca", "Missão espiritual", "Não posso mais", "Momento é agora"] },
+                { question: "O que seria pior?", options: ["Nunca tentar", "Saber que poderia", "Peso na consciência", "Deixar alma sem paz", "Todas alternativas"] },
+                { question: "Está pronto para acender?", options: ["SIM!", "Caminho certo", "Resposta que busco", "Hora da diferença", "Missão sagrada"] },
+                { question: "Se não for você, quem? Se não for agora, quando?", options: [
+                    "EU SOU A PESSOA CERTA - AGORA É O MOMENTO!",
+                    "VOU DEIXAR ESSA ALMA NO ESCURO MAIS UMA VEZ"
+                ]}
             ];
 
-            const handleAnswer = (answerIndex) => {
-                const newAnswers = [...answers];
-                newAnswers[currentQuestion] = answerIndex;
-                setAnswers(newAnswers);
-
-                if (currentQuestion < questions.length - 1) {
-                    setTimeout(() => {
-                        setCurrentQuestion(currentQuestion + 1);
-                    }, 400);
-                } else {
-                    setTimeout(() => {
-                        setCurrentPage('form');
-                        setShowExitPopup(false);
-                    }, 800);
-                }
-            };
-
-            const handleChange = (e) => {
-                const { name, value } = e.target;
-                setFormData({
-                    ...formData,
-                    [name]: value
-                });
-                
-                if (errors[name]) {
-                    setErrors({
-                        ...errors,
-                        [name]: ''
-                    });
-                }
-            };
-
-            const validateForm = () => {
-                const newErrors = {};
-                
-                if (!formData.name.trim()) {
-                    newErrors.name = 'Nome é obrigatório';
-                }
-                
-                if (!formData.city.trim()) {
-                    newErrors.city = 'Cidade é obrigatória';
-                }
-                
-                if (!formData.state.trim()) {
-                    newErrors.state = 'Estado é obrigatório';
-                }
-                
-                if (!formData.reason.trim()) {
-                    newErrors.reason = 'Motivo é obrigatório';
-                }
-                
-                setErrors(newErrors);
-                return Object.keys(newErrors).length === 0;
-            };
-
-            const handleFormSubmit = async (e) => {
-                e.preventDefault();
-                if (validateForm()) {
-                    setShowConfirmationPopup(true);
-                }
-            };
-
-            const handleConfirm = async () => {
-                setShowConfirmationPopup(false);
+            // Chamar backend para criar pagamento
+            const createPayment = async () => {
                 setIsProcessing(true);
-                setCurrentPage('payment');
-
                 try {
-                    // Criar preferência de pagamento no Mercado Pago
-                    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                    const response = await fetch(`${BACK4APP_URL}/createPayment`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                            'Content-Type': 'application/json',
+                            'X-Parse-Application-Id': BACK4APP_APP_ID,
+                            'X-Parse-REST-API-Key': BACK4APP_API_KEY,
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            items: [
-                                {
-                                    title: `Vela Virtual para ${formData.name}`,
-                                    quantity: 1,
-                                    currency_id: 'BRL',
-                                    unit_price: 6.99
-                                }
-                            ],
-                            payment_methods: {
-                                excluded_payment_methods: [
-                                    { id: 'credit_card' },
-                                    { id: 'debit_card' },
-                                    { id: 'ticket' }
-                                ],
-                                excluded_payment_types: [
-                                    { id: 'credit_card' },
-                                    { id: 'debit_card' },
-                                    { id: 'ticket' }
-                                ],
-                                installments: 1
-                            },
-                            payer: {
-                                email: 'cliente@example.com' // Será preenchido pelo MP
-                            },
-                            notification_url: 'https://webhook.site/your-webhook',
-                            back_urls: {
-                                success: window.location.href,
-                                failure: window.location.href,
-                                pending: window.location.href
-                            },
-                            auto_return: 'approved',
-                            statement_descriptor: 'VELA VIRTUAL'
+                            name: formData.name,
+                            amount: 6.99
                         })
                     });
 
-                    const preference = await response.json();
+                    const data = await response.json();
                     
-                    // Gerar QR Code PIX
-                    const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${preference.id}`, {
-                        headers: {
-                            'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
-                        }
-                    });
-
-                    const paymentData = await paymentResponse.json();
-                    
-                    if (paymentData.point_of_interaction && paymentData.point_of_interaction.transaction_data) {
-                        setPixCode(paymentData.point_of_interaction.transaction_data.qr_code);
-                        setQrCode(paymentData.point_of_interaction.transaction_data.qr_code_base64);
-                        setPaymentId(preference.id);
+                    if (data.result.success) {
+                        setPixCode(data.result.pixCode);
+                        setQrCode(data.result.qrCode);
+                        setPaymentId(data.result.paymentId);
+                        setPaymentStatus('pending');
+                    } else {
+                        throw new Error(data.result.error);
                     }
 
                 } catch (error) {
-                    console.error('Erro ao criar pagamento:', error);
-                    alert('Erro ao processar pagamento. Tente novamente.');
+                    console.error('Erro:', error);
+                    alert('Erro ao criar pagamento: ' + error.message);
                 } finally {
                     setIsProcessing(false);
                 }
             };
 
-            const handleCancel = () => {
+            // Verificar status do pagamento
+            const checkPaymentStatus = async () => {
+                if (!paymentId) return;
+                
+                try {
+                    const response = await fetch(`${BACK4APP_URL}/checkPayment`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Parse-Application-Id': BACK4APP_APP_ID,
+                            'X-Parse-REST-API-Key': BACK4APP_API_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            paymentId: paymentId
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.result.success && data.result.approved) {
+                        setPaymentStatus('approved');
+                        setCurrentPage('candle');
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar:', error);
+                }
+            };
+
+            // Verificar pagamento a cada 10 segundos
+            useEffect(() => {
+                let interval;
+                if (paymentId && paymentStatus === 'pending') {
+                    interval = setInterval(checkPaymentStatus, 10000);
+                }
+                return () => clearInterval(interval);
+            }, [paymentId, paymentStatus]);
+
+            const handleAnswer = (index) => {
+                const newAnswers = [...answers];
+                newAnswers[currentQuestion] = index;
+                setAnswers(newAnswers);
+                if (currentQuestion < questions.length - 1) {
+                    setTimeout(() => setCurrentQuestion(currentQuestion + 1), 400);
+                } else {
+                    setTimeout(() => setCurrentPage('form'), 800);
+                }
+            };
+
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                const newErrors = {};
+                if (!formData.name.trim()) newErrors.name = 'Nome obrigatório';
+                if (!formData.city.trim()) newErrors.city = 'Cidade obrigatória';
+                if (!formData.state.trim()) newErrors.state = 'Estado obrigatório';
+                if (!formData.reason.trim()) newErrors.reason = 'Motivo obrigatório';
+                setErrors(newErrors);
+                if (Object.keys(newErrors).length === 0) setShowConfirmationPopup(true);
+            };
+
+            const handleConfirmPayment = () => {
+                createPayment();
                 setShowConfirmationPopup(false);
+                setCurrentPage('payment');
             };
 
             const copyPixCode = () => {
                 navigator.clipboard.writeText(pixCode).then(() => {
-                    alert('Código PIX copiado! Cole no seu app bancário.');
+                    alert('Código PIX copiado!');
                 });
-            };
-
-            const checkPaymentStatus = async () => {
-                try {
-                    const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
-                        }
-                    });
-                    
-                    const payment = await response.json();
-                    
-                    if (payment.status === 'approved') {
-                        setPaymentConfirmed(true);
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar pagamento:', error);
-                }
-            };
-
-            const handlePaymentConfirm = () => {
-                // Simular confirmação de pagamento (em produção, usar webhook)
-                setPaymentConfirmed(true);
-            };
-
-            const handleLightCandle = () => {
-                setCurrentPage('candle');
-                setShowExitPopup(false);
-            };
-
-            const handleStay = () => {
-                setShowExitPopup(false);
-            };
-
-            const handleLeave = () => {
-                setShowExitPopup(false);
-                window.close();
             };
 
             const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -841,22 +210,12 @@
 
                     {currentPage === 'quiz' && (
                         <section>
-                            <div className="progress-bar">
-                                <div className="progress" style={{width: `${progress}%`}}></div>
-                            </div>
-
+                            <div className="progress-bar"><div className="progress" style={{width: `${progress}%`}}></div></div>
                             <div className="question-container">
-                                <h2 className="question-text">
-                                    {questions[currentQuestion].question}
-                                </h2>
-                                
+                                <h2 className="question-text">{questions[currentQuestion].question}</h2>
                                 <div className="options-container">
                                     {questions[currentQuestion].options.map((option, index) => (
-                                        <div
-                                            key={index}
-                                            className={`option ${answers[currentQuestion] === index ? 'selected' : ''}`}
-                                            onClick={() => handleAnswer(index)}
-                                        >
+                                        <div key={index} className={`option ${answers[currentQuestion] === index ? 'selected' : ''}`} onClick={() => handleAnswer(index)}>
                                             {option}
                                         </div>
                                     ))}
@@ -868,73 +227,12 @@
                     {currentPage === 'form' && (
                         <section>
                             <h2>Complete sua Jornada</h2>
-                            <p>Preencha os dados para personalizar sua vela:</p>
-                            
                             <form onSubmit={handleFormSubmit}>
-                                <div className="form-group">
-                                    <label htmlFor="name">Nome para quem deseja acender a vela *</label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        placeholder="Digite o nome"
-                                    />
-                                    {errors.name && <div className="error">{errors.name}</div>}
-                                </div>
-                                
-                                <div className="form-group">
-                                    <label htmlFor="city">Cidade *</label>
-                                    <input
-                                        type="text"
-                                        id="city"
-                                        name="city"
-                                        value={formData.city}
-                                        onChange={handleChange}
-                                        placeholder="Digite a cidade"
-                                    />
-                                    {errors.city && <div className="error">{errors.city}</div>}
-                                </div>
-                                
-                                <div className="form-group">
-                                    <label htmlFor="state">Estado *</label>
-                                    <input
-                                        type="text"
-                                        id="state"
-                                        name="state"
-                                        value={formData.state}
-                                        onChange={handleChange}
-                                        placeholder="Digite o estado"
-                                    />
-                                    {errors.state && <div className="error">{errors.state}</div>}
-                                </div>
-                                
-                                <div className="form-group">
-                                    <label htmlFor="reason">Motivo da vela *</label>
-                                    <textarea
-                                        id="reason"
-                                        name="reason"
-                                        value={formData.reason}
-                                        onChange={handleChange}
-                                        placeholder="Descreva o motivo pelo qual está acendendo esta vela"
-                                    />
-                                    {errors.reason && <div className="error">{errors.reason}</div>}
-                                </div>
-                                
-                                <div className="form-group">
-                                    <label htmlFor="days">Por quanto tempo a vela ficará acesa?</label>
-                                    <select
-                                        id="days"
-                                        name="days"
-                                        value={formData.days}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="1">1 dia (Ritual Básico)</option>
-                                        <option value="7">7 dias (Ritual Completo)</option>
-                                    </select>
-                                </div>
-                                
+                                <div className="form-group"><label>Nome *</label><input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Digite o nome" />{errors.name && <div className="error">{errors.name}</div>}</div>
+                                <div className="form-group"><label>Cidade *</label><input type="text" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} placeholder="Digite a cidade" />{errors.city && <div className="error">{errors.city}</div>}</div>
+                                <div className="form-group"><label>Estado *</label><input type="text" value={formData.state} onChange={(e) => setFormData({...formData, state: e.target.value})} placeholder="Digite o estado" />{errors.state && <div className="error">{errors.state}</div>}</div>
+                                <div className="form-group"><label>Motivo *</label><textarea value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} placeholder="Descreva o motivo" />{errors.reason && <div className="error">{errors.reason}</div>}</div>
+                                <div className="form-group"><label>Duração</label><select value={formData.days} onChange={(e) => setFormData({...formData, days: e.target.value})}><option value="1">1 dia</option><option value="7">7 dias</option></select></div>
                                 <button type="submit">Acender Vela</button>
                             </form>
                         </section>
@@ -942,137 +240,54 @@
 
                     {currentPage === 'payment' && (
                         <section>
-                            <h2>Último Passo: Realize o Pagamento</h2>
-                            
+                            <h2>Pagamento PIX</h2>
                             <div className="pix-container">
                                 {isProcessing ? (
-                                    <div className="payment-processing">
-                                        <div className="loader"></div>
-                                        <p>Gerando seu código PIX...</p>
-                                    </div>
+                                    <div className="payment-processing"><div className="loader"></div><p>Gerando PIX...</p></div>
                                 ) : (
                                     <>
-                                        <p className="pix-instructions">
-                                            <strong>Valor: R$ 6,99</strong><br/>
-                                            Faça o PIX abaixo para ativar sua vela:
-                                        </p>
-                                        
-                                        {qrCode && (
-                                            <div style={{textAlign: 'center', margin: '15px 0'}}>
-                                                <img 
-                                                    src={`data:image/png;base64,${qrCode}`} 
-                                                    alt="QR Code PIX" 
-                                                    style={{maxWidth: '200px', border: '2px solid #C86514', borderRadius: '8px'}}
-                                                />
-                                            </div>
-                                        )}
-                                        
-                                        {pixCode && (
-                                            <div className="pix-code" onClick={copyPixCode}>
-                                                {pixCode}<br/>
-                                                <small>(Clique para copiar o código PIX)</small>
-                                            </div>
-                                        )}
-                                        
-                                        <p className="pix-instructions">
-                                            📱 Abra seu app bancário → PIX Copia e Cola<br/>
-                                            💫 Cole o código → Confirme o pagamento
-                                        </p>
-                                        
-                                        {!paymentConfirmed ? (
-                                            <button onClick={handlePaymentConfirm}>
-                                                ✅ Já efetuei o PIX
-                                            </button>
-                                        ) : (
-                                            <button className="final-button" onClick={handleLightCandle}>
-                                                🕯️ ACENDA SUA VELA
-                                            </button>
-                                        )}
+                                        <p><strong>Valor: R$ 6,99</strong></p>
+                                        {qrCode && <img src={`data:image/png;base64,${qrCode}`} alt="QR Code PIX" style={{maxWidth: '200px', margin: '15px auto', display: 'block', border: '2px solid #C86514', borderRadius: '8px'}} />}
+                                        {pixCode && <div className="pix-code" onClick={copyPixCode}>{pixCode}<br/><small>(Clique para copiar)</small></div>}
+                                        <p>📱 Use o QR Code ou código PIX<br/>✅ Pagamento verificado automaticamente</p>
+                                        {paymentStatus === 'pending' && <div className="payment-status payment-pending">⏳ Aguardando confirmação...</div>}
+                                        {paymentStatus === 'approved' && <div className="payment-status payment-approved">✅ Pagamento confirmado!</div>}
                                     </>
                                 )}
                             </div>
                         </section>
                     )}
 
-                    {currentPage === 'candle' && (
+                    {currentPage === 'candle' && paymentStatus === 'approved' && (
                         <section>
                             <div className="candle-container">
-                                <h2>Sua Vela Está Acesa</h2>
-                                
-                                <div className="candle">
-                                    <div className="candle-flame"></div>
-                                    <div className="candle-wax"></div>
-                                    <div className="candle-base"></div>
-                                </div>
-                                
+                                <h2>Vela Acesa com Sucesso! 🙏</h2>
+                                <div className="candle"><div className="candle-flame"></div><div className="candle-wax"></div></div>
                                 <div className="candle-info">
-                                    <h3>Esta vela foi acesa para:</h3>
-                                    <p><strong>Nome:</strong> {formData.name}</p>
+                                    <h3>Vela acesa para: {formData.name}</h3>
                                     <p><strong>Cidade:</strong> {formData.city}</p>
                                     <p><strong>Estado:</strong> {formData.state}</p>
                                     <p><strong>Motivo:</strong> {formData.reason}</p>
-                                    <p className="days-counter">
-                                        {formData.days === '1' 
-                                            ? '✨ Esta vela brilhará por 1 dia completo' 
-                                            : '🌟 Esta vela brilhará por 7 dias completos'}
-                                    </p>
+                                    <p><strong>Duração:</strong> {formData.days} dias</p>
                                 </div>
-                                
-                                <button onClick={() => setCurrentPage('quiz')}>Acender Outra Vela</button>
+                                <button onClick={() => { setCurrentPage('quiz'); setCurrentQuestion(0); setAnswers([]); setPaymentStatus('pending'); }}>Acender Outra Vela</button>
                             </div>
                         </section>
                     )}
 
-                    {/* POPUPS */}
                     {showConfirmationPopup && (
                         <div className="confirmation-popup">
                             <div className="confirmation-popup-content">
-                                <h3>✨ Momento de Transformação Espiritual ✨</h3>
-                                <p>
-                                    <strong>Você está prestes a acender uma chama sagrada!</strong><br/><br/>
-                                    Esta vela consagrada será o elo espiritual entre você e {formData.name}, 
-                                    oferecendo a luz que esta alma tanto precisa para encontrar paz eterna.
-                                    <br/><br/>
-                                    <strong>Esta é sua missão espiritual.</strong>
-                                </p>
+                                <h3>✨ Confirmar Vela ✨</h3>
+                                <p>Para: <strong>{formData.name}</strong></p>
+                                <p>Valor: <strong>R$ 6,99</strong></p>
                                 <div className="confirmation-popup-buttons">
-                                    <button className="confirm-button" onClick={handleConfirm}>
-                                        🙏 SIM, Quero Ajudar Esta Alma
-                                    </button>
-                                    <button className="cancel-button" onClick={handleCancel}>
-                                        😔 Não Estou Pronto
-                                    </button>
+                                    <button onClick={handleConfirmPayment}>✅ CONFIRMAR E PAGAR</button>
+                                    <button onClick={() => setShowConfirmationPopup(false)}>❌ CANCELAR</button>
                                 </div>
                             </div>
                         </div>
                     )}
-
-                    {showExitPopup && (
-                        <div className="exit-popup">
-                            <div className="exit-popup-content">
-                                <h3>🕯️ Espere! Não Desista Desta Alma</h3>
-                                <p>
-                                    <strong>Esta alma ainda precisa de você!</strong><br/><br/>
-                                    Você está tão perto de fazer a diferença eterna. 
-                                    Se você sair agora, esta alma pode nunca receber a luz que tanto precisa para encontrar paz.
-                                    <br/><br/>
-                                    <strong>Volte e complete sua missão espiritual.</strong>
-                                </p>
-                                <div className="exit-popup-buttons">
-                                    <button className="stay-button" onClick={handleStay}>
-                                        🙏 Voltar e Ajudar
-                                    </button>
-                                    <button className="leave-button" onClick={handleLeave}>
-                                        😔 Abandonar Esta Alma
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    <footer>
-                        <p>© 2024 Acenda uma Vela Virtual - Um espaço para reflexão e homenagem</p>
-                    </footer>
                 </div>
             );
         }
